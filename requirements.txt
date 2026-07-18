@@ -1,0 +1,6 @@
+# Dependências de execução.
+#
+# O modelo de NER NÃO é instalado por aqui -- ver README (secao "Instalacao").
+# Resumo: `python -m spacy download pt_core_news_sm` baixa o modelo UMA VEZ.
+# Depois disso o anonimizador roda 100% offline.
+spacy>=3.7,<4.0

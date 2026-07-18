@@ -1,0 +1,23 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# ---------------------------------------------------------------------------
+# NUNCA versionar saida do anonimizador.
+#
+# O mapa de-para reverte a pseudonimizacao: commitado, o dado pessoal fica no
+# historico do git para sempre, mesmo que o arquivo seja apagado depois.
+# ---------------------------------------------------------------------------
+*.mapa.json
+*.anonimizado.*
+exemplos/saida_*
+exemplos/mapa_*
+
+# Documentos reais em tratamento -- guarde fora do repositorio.
+entrada/
+saida/

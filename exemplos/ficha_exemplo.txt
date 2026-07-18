@@ -1,0 +1,18 @@
+FICHA DE ATENDIMENTO - UNIDADE CENTRAL
+
+Nome: João da Silva
+CPF: 111.444.777-35
+RG: 12.345.678-9
+PIS: 123.45678.90-0
+Título de eleitor: 123456780698
+
+O paciente João da Silva compareceu acompanhado de sua irmã,
+Maria Oliveira Santos, que apresentou o CPF 529.982.247-25.
+
+O responsável pelo atendimento foi o Sr. Carlos Eduardo de Almeida.
+
+Empresa conveniada: CNPJ 11.222.333/0001-81
+Novo fornecedor (formato alfanumérico): CNPJ 12.ABC.345/01DE-35
+
+Observação: o protocolo 12345678901 não é dado pessoal e deve
+permanecer intacto no documento tratado.

@@ -1,0 +1,21 @@
+[project]
+name = "anonimizador"
+version = "0.1.0"
+description = "Remove ou pseudonimiza dados pessoais de documentos. 100% local/offline."
+requires-python = ">=3.10"
+dependencies = ["spacy>=3.7,<4.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+anonimizador = "anonimizador.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Deixa `anonimizador` importavel rodando `pytest` puro, sem depender de o
+# diretorio atual entrar no sys.path (o que so acontece com `python -m pytest`).
+pythonpath = ["."]
+
+[tool.setuptools.packages.find]
+include = ["anonimizador*"]
