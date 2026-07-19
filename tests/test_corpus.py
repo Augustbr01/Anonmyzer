@@ -99,6 +99,48 @@ CORPUS = [
         ],
     ),
     Documento(
+        nome="cadastro com dados de contato",
+        texto=(
+            "CADASTRO DE CLIENTE\n"
+            "\n"
+            "Nome: Ana Paula Ferreira\n"
+            "E-mail: ana.ferreira@provedor.com.br\n"
+            "Telefone: (11) 98765-4321\n"
+            "Fixo: 11 3456-7890\n"
+            "Endereco: Rua das Flores, 123, apto 45\n"
+            "CEP: 01310-100\n"
+            "\n"
+            "Segundo contato: joao@outro.com, celular 21987654321.\n"
+        ),
+        esperado=[
+            ("NOME", "Ana Paula Ferreira"),
+            ("EMAIL", "ana.ferreira@provedor.com.br"),
+            ("TELEFONE", "(11) 98765-4321"),
+            ("TELEFONE", "11 3456-7890"),
+            ("ENDERECO", "Rua das Flores, 123, apto 45"),
+            ("CEP", "01310-100"),
+            ("EMAIL", "joao@outro.com"),
+            ("TELEFONE", "21987654321"),
+        ],
+    ),
+    Documento(
+        nome="endereco com nome de pessoa no logradouro",
+        texto=(
+            "O imovel fica na Rua Joaquim Nabuco, 450, no bairro central. "
+            "O proprietario Ricardo Alves Pinto pode ser contatado pelo "
+            "e-mail ricardo.pinto@imobiliaria.com ou pelo telefone "
+            "(21) 3456-7890.\n"
+        ),
+        esperado=[
+            # O endereco inteiro tem que vencer o NER, que marca
+            # "Joaquim Nabuco" como pessoa dentro dele.
+            ("ENDERECO", "Rua Joaquim Nabuco, 450"),
+            ("NOME", "Ricardo Alves Pinto"),
+            ("EMAIL", "ricardo.pinto@imobiliaria.com"),
+            ("TELEFONE", "(21) 3456-7890"),
+        ],
+    ),
+    Documento(
         nome="controle negativo (nenhum dado pessoal)",
         texto=(
             "RELATORIO DE ESTOQUE\n"

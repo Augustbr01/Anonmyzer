@@ -118,9 +118,23 @@ PADRAO_CAIXA_ALTA = re.compile(
     rf"\b([A-ZÀ-Ý]{{2,}}(?:{_ESPACO}(?:[A-ZÀ-Ý]{{2,}}|{_CONECTIVO})){{1,6}})\b"
 )
 
-# Palavras que aparecem em titulo de secao/cabecalho, nunca em nome de pessoa.
-# Se qualquer uma aparecer no trecho em caixa alta, ele nao e tratado como nome.
-_RUIDO_CAIXA_ALTA = {
+# Vocabulario de documento/formulario -- palavras que nunca sao nome de pessoa.
+# Usado em dois pontos:
+#   1. descarta trecho em CAIXA ALTA que contenha qualquer uma delas (titulo
+#      de secao nao e nome);
+#   2. descarta entidade PER de UMA palavra so que seja uma delas.
+#
+# (2) e a unica vez no projeto em que uma deteccao e descartada, e vai na
+# contramao do principio "prefere falso positivo". A justificativa e estreita:
+# o pt_core_news_sm marca substantivo comum capitalizado no inicio de linha
+# como PER ("Contato do paciente:" -> PER "Contato"), e nenhuma palavra desta
+# lista e nome de pessoa em portugues. So vale para deteccao de UMA palavra --
+# nome composto nunca e afetado.
+#
+# AO EDITAR: entra so substantivo comum que nao seja tambem sobrenome. Nomes
+# como Rosa, Neves, Cruz, Franca e Pereira sao palavras comuns E sobrenomes
+# reais -- incluir qualquer um deles criaria falso negativo de verdade.
+_VOCABULARIO_DOCUMENTO = {
     # tipos de documento e estrutura de texto juridico
     "contrato", "prestacao", "servicos", "servico", "declaracao", "termo",
     "anexo", "clausula", "paragrafo", "artigo", "capitulo", "secao", "titulo",
@@ -142,6 +156,12 @@ _RUIDO_CAIXA_ALTA = {
     "partes", "presente", "instrumento", "particular", "geral",
     "estoque", "produto", "quantidade", "preco", "pagamento", "fatura",
     "periodo", "prazo", "vencimento", "interno",
+    # campos de contato e de cabecalho de formulario
+    "contato", "assunto", "referencia", "remetente", "destinatario",
+    "interessado", "solicitante", "emitente", "favorecido",
+    "telefone", "celular", "email", "fone", "whatsapp",
+    "numero", "codigo", "tipo", "status", "categoria", "descricao",
+    "natureza", "finalidade", "motivo", "origem", "destino", "complemento",
 }
 
 
@@ -183,6 +203,17 @@ def carregar_modelo(nome: str = MODELO_PADRAO) -> Any:
 # --------------------------------------------------------------------------
 # Estrategias
 # --------------------------------------------------------------------------
+
+def _eh_vocabulario_de_documento(trecho: str) -> bool:
+    """
+    True para trecho de UMA palavra que e vocabulario de formulario.
+
+    Restrito a uma palavra de proposito: "Contato" e rotulo de campo, mas
+    "Contato Silva" (se existisse) seria nome. Nome composto nunca cai aqui.
+    """
+    palavras = normalizar(trecho).split()
+    return len(palavras) == 1 and palavras[0] in _VOCABULARIO_DOCUMENTO
+
 
 def _fatiar(texto: str, limite: int = LIMITE_CHUNK) -> list[tuple[int, str]]:
     """
@@ -257,6 +288,8 @@ def _detectar_por_ner(texto: str, modelo: Any) -> list[Deteccao]:
             trecho = bruto.strip()
             if len(trecho) < 2:
                 continue
+            if _eh_vocabulario_de_documento(trecho):
+                continue
 
             # .strip() pode ter tirado espacos da ponta; realinha os offsets.
             inicio_real = deslocamento + inicio_char + bruto.index(trecho)
@@ -323,7 +356,7 @@ def _detectar_caixa_alta(texto: str) -> list[Deteccao]:
     for match in PADRAO_CAIXA_ALTA.finditer(texto):
         trecho = match.group(1)
         palavras = normalizar(trecho).split()
-        if any(p in _RUIDO_CAIXA_ALTA for p in palavras):
+        if any(p in _VOCABULARIO_DOCUMENTO for p in palavras):
             continue
         if len([p for p in palavras if len(p) > 2]) < 2:
             continue

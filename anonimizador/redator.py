@@ -45,6 +45,10 @@ MARCADORES = {
     "PIS": "[PIS]",
     "TITULO_ELEITOR": "[TITULO_ELEITOR]",
     "PASSAPORTE": "[PASSAPORTE]",
+    "EMAIL": "[EMAIL]",
+    "TELEFONE": "[TELEFONE]",
+    "ENDERECO": "[ENDERECO]",
+    "CEP": "[CEP]",
 }
 
 # Prefixo do token no modo pseudonimo.
@@ -57,6 +61,10 @@ PREFIXOS_TOKEN = {
     "PIS": "PIS",
     "TITULO_ELEITOR": "TITULO",
     "PASSAPORTE": "PASSAPORTE",
+    "EMAIL": "EMAIL",
+    "TELEFONE": "TELEFONE",
+    "ENDERECO": "ENDERECO",
+    "CEP": "CEP",
 }
 
 
@@ -100,11 +108,26 @@ def _chave(tipo: str, texto: str) -> str:
     pessoa. Resolver isso exigiria ligacao de correferencia, que esta fora do
     escopo atual. O erro e na direcao segura -- separa demais, nunca junta
     pessoas distintas sob o mesmo token.
+
+    CUIDADO AO ACRESCENTAR TIPO NOVO: o ramo final ("so digitos") e destrutivo
+    para qualquer tipo textual -- um e-mail viraria chave vazia e TODOS os
+    e-mails do documento colapsariam num unico token. Tipo com letra precisa
+    de ramo proprio aqui.
     """
-    if tipo == "NOME":
+    if tipo in {"NOME", "ENDERECO"}:  # texto livre
         sem_acento = unicodedata.normalize("NFKD", texto)
         sem_acento = "".join(c for c in sem_acento if not unicodedata.combining(c))
         return re.sub(r"\s+", " ", sem_acento).strip().lower()
+
+    if tipo == "EMAIL":
+        return texto.strip().lower()
+
+    if tipo == "TELEFONE":
+        # "+55 11 98765-4321" e "11987654321" sao o mesmo telefone.
+        digitos = somente_digitos(texto)
+        if len(digitos) in (12, 13) and digitos.startswith("55"):
+            digitos = digitos[2:]
+        return digitos
 
     if tipo in {"CNPJ", "PASSAPORTE"}:  # podem ter letras
         return re.sub(r"[^A-Za-z0-9]", "", texto).upper()

@@ -112,6 +112,45 @@ def test_modo_agressivo_ignora_cabecalho(modelo_ner):
     assert not any(d.detector == "nomes:caixa_alta" for d in deteccoes)
 
 
+def test_rotulo_de_campo_nao_vira_nome(modelo_ner):
+    """
+    Caso real medido: o pt_core_news_sm marca "Contato" como PER em
+    "Contato do paciente:", e o texto tratado saia com "[NOME] do paciente:".
+    O filtro de vocabulario derruba entidade PER de uma palavra so.
+    """
+    texto = "Contato do paciente:\nE-mail: joao@x.com"
+    assert not any(d.texto == "Contato" for d in detectar_nomes(texto, modelo=modelo_ner))
+
+
+def test_filtro_de_vocabulario_so_afeta_uma_palavra(modelo_ner):
+    """
+    O filtro nao pode encostar em nome composto. Aqui "Nota" isolado seria
+    descartado, mas dentro de um nome de duas palavras a deteccao continua.
+    """
+    from anonimizador.detectores.nomes import _eh_vocabulario_de_documento
+
+    assert _eh_vocabulario_de_documento("Contato")
+    assert _eh_vocabulario_de_documento("TELEFONE")
+    assert not _eh_vocabulario_de_documento("Contato Silva")
+    assert not _eh_vocabulario_de_documento("Joao")
+
+
+def test_vocabulario_nao_contem_sobrenome_comum():
+    """
+    Trava contra o risco real do filtro: incluir uma palavra que tambem e
+    sobrenome brasileiro criaria falso negativo -- um nome real deixando de
+    ser detectado.
+    """
+    from anonimizador.detectores.nomes import _VOCABULARIO_DOCUMENTO
+
+    sobrenomes = {
+        "rosa", "neves", "cruz", "franca", "pereira", "silva", "santos",
+        "campos", "lima", "costa", "ramos", "pires", "leao", "coelho",
+        "cordeiro", "monteiro", "prado", "barros", "amaral", "rocha",
+    }
+    assert not (_VOCABULARIO_DOCUMENTO & sobrenomes)
+
+
 def test_texto_vazio(modelo_ner):
     assert detectar_nomes("", modelo=modelo_ner) == []
 

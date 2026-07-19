@@ -11,6 +11,13 @@ Maria Oliveira Santos, que apresentou o CPF 529.982.247-25.
 
 O responsável pelo atendimento foi o Sr. Carlos Eduardo de Almeida.
 
+Contato do paciente:
+E-mail: joao.silva@provedor.com.br
+Telefone: (11) 98765-4321
+Fixo: 11 3456-7890
+Endereço: Rua das Flores, 123, apto 45
+CEP: 01310-100
+
 Empresa conveniada: CNPJ 11.222.333/0001-81
 Novo fornecedor (formato alfanumérico): CNPJ 12.ABC.345/01DE-35
 

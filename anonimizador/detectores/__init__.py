@@ -18,29 +18,37 @@ from anonimizador.deteccao import Deteccao, resolver_sobreposicoes
 from anonimizador.detectores.cnh import detectar_cnhs
 from anonimizador.detectores.cnpj import detectar_cnpjs
 from anonimizador.detectores.cpf import detectar_cpfs
+from anonimizador.detectores.email import detectar_emails
+from anonimizador.detectores.endereco import detectar_enderecos
 from anonimizador.detectores.passaporte import detectar_passaportes
 from anonimizador.detectores.pis import detectar_pis
 from anonimizador.detectores.rg import detectar_rgs
+from anonimizador.detectores.telefone import detectar_telefones
 from anonimizador.detectores.titulo_eleitor import detectar_titulos
 
 __all__ = ["DETECTORES_DOCUMENTO", "detectar_documentos", "detectar_tudo"]
 
-# Detectores de documento: assinatura uniforme (texto) -> list[Deteccao].
-# Os cinco primeiros validam por digito verificador; os dois ultimos so
-# reconhecem formato (ver aviso nos respectivos modulos).
+# Detectores que NAO dependem do modelo de NER: assinatura uniforme
+# (texto) -> list[Deteccao]. Agrupados por quanto se pode confiar neles.
 DETECTORES_DOCUMENTO: dict[str, Callable[[str], list[Deteccao]]] = {
+    # digito verificador matematico
     "cpf": detectar_cpfs,
     "cnpj": detectar_cnpjs,
     "titulo_eleitor": detectar_titulos,
     "pis": detectar_pis,
     "cnh": detectar_cnhs,
+    # formato inequivoco ou validacao estrutural
+    "email": detectar_emails,
+    "telefone": detectar_telefones,
+    "endereco": detectar_enderecos,
+    # so formato, sem checksum (ver aviso nos respectivos modulos)
     "rg": detectar_rgs,
     "passaporte": detectar_passaportes,
 }
 
 
 def detectar_documentos(texto: str) -> list[Deteccao]:
-    """Roda so os detectores de documento (nao precisa do modelo de NER)."""
+    """Roda so os detectores que nao precisam do modelo de NER."""
     deteccoes: list[Deteccao] = []
     for detectar in DETECTORES_DOCUMENTO.values():
         deteccoes.extend(detectar(texto))

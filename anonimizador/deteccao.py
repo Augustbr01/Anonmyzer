@@ -36,12 +36,20 @@ class Confianca(IntEnum):
 # tamanho de entrada. Qualquer um que ganhe, o numero e redigido do mesmo
 # jeito; a ordem abaixo so decide qual ROTULO aparece no lugar.
 PRIORIDADE_TIPO = {
+    # validados por digito verificador
     "CPF": 100,
     "CNPJ": 95,
     "TITULO_ELEITOR": 90,
     "CNH": 85,
     "PIS": 80,
+    # formato inequivoco (ancora obrigatoria: @, tipo de logradouro)
+    "EMAIL": 78,
+    "ENDERECO": 75,
+    # NER e estrutura
     "NOME": 70,
+    "TELEFONE": 68,
+    "CEP": 65,
+    # so formato, sem checksum
     "RG": 60,
     "PASSAPORTE": 55,
 }

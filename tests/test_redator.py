@@ -83,6 +83,71 @@ def test_pseudonimo_nome_normaliza_caixa_e_acento():
     assert len(resultado.mapa) == 1
 
 
+def test_pseudonimo_nao_colapsa_emails_diferentes():
+    """
+    Regressao: o ramo final de `_chave` e "so digitos". Um e-mail caindo la
+    viraria chave VAZIA, e todos os e-mails do documento colapsariam num
+    unico token -- sugerindo uma pessoa so onde ha varias.
+    """
+    texto = "joao@x.com e maria@y.com sao pessoas diferentes."
+    deteccoes = [_det(texto, "joao@x.com", "EMAIL"), _det(texto, "maria@y.com", "EMAIL")]
+    resultado = redigir(texto, deteccoes, Modo.PSEUDONIMO)
+
+    assert resultado.texto.startswith("EMAIL_001 e EMAIL_002")
+    assert len(resultado.mapa) == 2
+
+
+def test_pseudonimo_nao_colapsa_enderecos_diferentes():
+    """Mesmo risco do e-mail: endereco e texto livre, nao numero."""
+    texto = "Rua A, 1 e Rua B, 2 sao enderecos distintos."
+    deteccoes = [_det(texto, "Rua A, 1", "ENDERECO"), _det(texto, "Rua B, 2", "ENDERECO")]
+    resultado = redigir(texto, deteccoes, Modo.PSEUDONIMO)
+    assert len(resultado.mapa) == 2
+
+
+def test_pseudonimo_email_ignora_caixa():
+    texto = "JOAO@X.COM e joao@x.com sao o mesmo endereco."
+    deteccoes = [_det(texto, "JOAO@X.COM", "EMAIL"), _det(texto, "joao@x.com", "EMAIL")]
+    assert len(redigir(texto, deteccoes, Modo.PSEUDONIMO).mapa) == 1
+
+
+def test_pseudonimo_telefone_ignora_mascara_e_ddi():
+    """"+55 11 98765-4321" e "11987654321" sao o mesmo telefone."""
+    texto = "Ligue para +55 11 98765-4321 ou 11987654321."
+    deteccoes = [
+        _det(texto, "+55 11 98765-4321", "TELEFONE"),
+        _det(texto, "11987654321", "TELEFONE"),
+    ]
+    resultado = redigir(texto, deteccoes, Modo.PSEUDONIMO)
+    assert len(resultado.mapa) == 1
+    assert resultado.texto.count("TELEFONE_001") == 2
+
+
+def test_anonimo_marcadores_dos_tipos_de_contato():
+    texto = "joao@x.com, (11) 98765-4321, Rua A, 1, CEP 01310-100"
+    deteccoes = [
+        _det(texto, "joao@x.com", "EMAIL"),
+        _det(texto, "(11) 98765-4321", "TELEFONE"),
+        _det(texto, "Rua A, 1", "ENDERECO"),
+        _det(texto, "01310-100", "CEP"),
+    ]
+    resultado = redigir(texto, deteccoes, Modo.ANONIMO)
+    assert resultado.texto == "[EMAIL], [TELEFONE], [ENDERECO], CEP [CEP]"
+
+
+def test_todo_tipo_detectavel_tem_marcador_e_prefixo():
+    """
+    Trava para quem acrescentar detector: sem entrada em MARCADORES o tipo
+    cai num marcador improvisado, e sem entrada em PREFIXOS_TOKEN o token
+    fica com o nome cru do tipo.
+    """
+    from anonimizador.deteccao import PRIORIDADE_TIPO
+    from anonimizador.redator import MARCADORES, PREFIXOS_TOKEN
+
+    assert set(PRIORIDADE_TIPO) <= set(MARCADORES)
+    assert set(PRIORIDADE_TIPO) <= set(PREFIXOS_TOKEN)
+
+
 def test_pseudonimo_gera_mapa_com_valor_real():
     texto = "Joao da Silva."
     resultado = redigir(texto, [_det(texto, "Joao da Silva", "NOME")], Modo.PSEUDONIMO)

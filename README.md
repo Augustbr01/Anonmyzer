@@ -95,6 +95,27 @@ caractere convertido por *ASCII − 48*. O detector aceita os dois formatos —
 validado contra o exemplo oficial `12.ABC.345/01DE-35`. Um validador que só
 aceitasse `\d` deixaria passar **todo** CNPJ no formato novo.
 
+### Contato (formato inequívoco ou validação estrutural)
+
+| dado | módulo | o que sustenta a detecção |
+|---|---|---|
+| E-mail | [`detectores/email.py`](anonimizador/detectores/email.py) | âncora obrigatória (`@`) + TLD |
+| Telefone | [`detectores/telefone.py`](anonimizador/detectores/telefone.py) | DDD da lista oficial + prefixo coerente |
+| Endereço e CEP | [`detectores/endereco.py`](anonimizador/detectores/endereco.py) | tipo de logradouro + número; CEP `12345-678` |
+
+**Telefone** não tem dígito verificador, mas tem estrutura suficiente para
+filtrar: o DDD precisa existir de verdade (20, 23, 30, 36, 39... não existem),
+celular tem 9 dígitos começando com 9, fixo tem 8 começando com 2-5. Na prática
+isso descarta bem — um CPF cru como `11144477735` tem DDD 11 válido, mas o
+terceiro dígito é 1, então não passa. Número sem DDD só é aceito com `Tel:`
+ou `Celular:` por perto.
+
+**Endereço é o detector mais fraco do projeto** — texto livre, sem checksum e
+sem começo/fim delimitados. A âncora é o tipo de logradouro na frente
+(`Rua`, `Avenida`, `Praça`) e o número no fim; exigir os dois derruba muito
+falso positivo, ao custo de não detectar endereço sem número. O CEP com hífen,
+esse sim, é confiável e vale sozinho.
+
 ### Sem dígito verificador (só formato, confiança menor)
 
 | documento | módulo |
@@ -135,6 +156,15 @@ Então o sistema é deliberadamente agressivo: detectores rodam em **união, nun
 interseção**, e detecção de baixa confiança ainda é redigida. A confiança serve
 para desempatar sobreposições e alimentar o relatório — nunca para descartar.
 
+**Há exatamente uma exceção**, em `nomes.py`: entidade `PER` de **uma palavra
+só** que seja vocabulário de formulário (`Contato`, `Telefone`, `Assunto`) é
+descartada. O `pt_core_news_sm` marca substantivo comum capitalizado no início
+de linha como pessoa, e sem esse filtro `"Contato do paciente:"` virava
+`"[NOME] do paciente:"`. A lista contém só substantivos comuns que não são
+sobrenome brasileiro — há um teste (`test_vocabulario_nao_contem_sobrenome_comum`)
+travando isso, porque incluir `Rosa`, `Neves` ou `Cruz` ali criaria falso
+negativo de verdade. Nome composto nunca é afetado.
+
 ## Como está organizado
 
 ```
@@ -171,12 +201,16 @@ cada rodada — é o que permite comparar antes/depois ao trocar de modelo
 1.0**: cada ponto faltante é um dado pessoal que vazaria. A precisão é só
 reportada, com piso frouxo.
 
-Placar atual (4 documentos, `pt_core_news_sm`):
+Placar atual (6 documentos, `pt_core_news_sm`):
 
 ```
-modo padrão     recall 1.00   precisão 0.93 (14/15 detecções úteis)
-modo agressivo  recall 1.00   precisão 0.93 (14/15 detecções úteis)
+modo padrão     recall 1.00   precisão 1.00 (26/26 detecções úteis)
+modo agressivo  recall 1.00   precisão 1.00 (26/26 detecções úteis)
 ```
+
+Precisão 1.00 aqui significa "nenhum falso positivo **neste corpus**" — não que
+o detector seja perfeito. O corpus é pequeno (6 documentos); ele serve para
+pegar regressão, não para atestar qualidade absoluta.
 
 Para acrescentar um caso, adicione um `Documento` em `CORPUS` com todos os dados
 pessoais listados em `esperado`.
@@ -201,9 +235,14 @@ grep -rE "requests|urllib|socket|httpx|http\." anonimizador/
 - **Correferência não é resolvida:** no modo pseudônimo, `João da Silva` e
   `João` recebem tokens diferentes mesmo sendo a mesma pessoa. O erro é na
   direção segura — separa demais, nunca junta duas pessoas sob um token.
-- **Números de 11 dígitos são ambíguos:** CPF, PIS e CNH têm o mesmo tamanho e
-  um número pode passar em mais de um checksum. Isso não afeta a segurança (o
-  número é redigido de todo jeito), só o rótulo escolhido.
+- **Números de 11 dígitos são ambíguos:** CPF, PIS, CNH e celular com DDD têm o
+  mesmo tamanho e um número pode passar em mais de uma validação. Isso não
+  afeta a segurança (o número é redigido de todo jeito), só o rótulo escolhido.
+- **Endereço sem número não é detectado** (`"mora na Rua das Flores"`), nem
+  endereço sem o tipo de logradouro na frente (`"Flores, 123"`). São falsos
+  negativos conhecidos e assumidos — é o preço de manter a precisão do
+  detector mais frágil do projeto.
 - **Só TXT por enquanto.** PDF e Excel são os próximos extratores.
-- **Endereço, telefone, e-mail e data de nascimento ainda não são detectados** —
-  são dados pessoais e valem como próximo passo depois dos extratores.
+- **Data de nascimento ainda não é detectada.** É o dado pessoal que falta;
+  data é difícil porque o formato colide com toda outra data do documento
+  (emissão, vencimento, assinatura) e só o contexto separa.
