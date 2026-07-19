@@ -54,8 +54,12 @@ _COMPLEMENTO = (
 )
 
 # Tipo de logradouro + nome + numero (virgula opcional entre nome e numero).
+#
+# O nome aceita a partir de UM caractere: "Rua A, 1" e "Rua 5, 200" sao comuns
+# em loteamento e condominio. Exigir dois caracteres (como era antes) deixava
+# esses enderecos passarem inteiros sem deteccao.
 PADRAO_LOGRADOURO = re.compile(
-    rf"\b({_TIPOS_LOGRADOURO}\s+[^\n,;:]{{2,60}}?,?\s*"
+    rf"\b({_TIPOS_LOGRADOURO}\s+[^\n,;:]{{1,60}}?,?\s*"
     rf"(?:n[º°o]?\.?\s*)?\d{{1,6}}[-/]?[A-Za-z]?{_COMPLEMENTO})",
     re.IGNORECASE,
 )

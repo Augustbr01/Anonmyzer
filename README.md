@@ -238,10 +238,16 @@ grep -rE "requests|urllib|socket|httpx|http\." anonimizador/
 - **Números de 11 dígitos são ambíguos:** CPF, PIS, CNH e celular com DDD têm o
   mesmo tamanho e um número pode passar em mais de uma validação. Isso não
   afeta a segurança (o número é redigido de todo jeito), só o rótulo escolhido.
-- **Endereço sem número não é detectado** (`"mora na Rua das Flores"`), nem
-  endereço sem o tipo de logradouro na frente (`"Flores, 123"`). São falsos
-  negativos conhecidos e assumidos — é o preço de manter a precisão do
-  detector mais frágil do projeto.
+- **Endereço sem número não é detectado** (`"mora na Rua das Flores"`, `"Rua X,
+  s/n"`), nem endereço sem o tipo de logradouro na frente (`"Flores, 123"`).
+  São falsos negativos conhecidos e assumidos — é o preço de manter a precisão
+  do detector mais frágil do projeto.
+- **Endereço em formato composto escapa:** `"Quadra 3, Casa 12"` e o padrão de
+  Brasília (`"SQN 210 Bloco A"`) não seguem "tipo + nome + número". Há dois
+  testes `xfail` marcando a lacuna — se passarem, ela foi fechada. Deixar o
+  padrão geral atravessar vírgula resolveria, mas dispararia em texto corrido
+  (`"na rua sozinho, havia 3 anos"`), então a correção exige uma família de
+  padrões própria.
 - **Só TXT por enquanto.** PDF e Excel são os próximos extratores.
 - **Data de nascimento ainda não é detectada.** É o dado pessoal que falta;
   data é difícil porque o formato colide com toda outra data do documento
